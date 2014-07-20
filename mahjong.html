@@ -160,13 +160,6 @@
                             // Set player's status
                             for (var i = 0; i < 4; i++) currentStatusOfPlayer[i] = 0;
 
-                            // Set player's name
-                            userNames = infoProvider.getPlayerNames();
-                            for (var i = 0; i < 4; i++) {
-                                $("#playerName_" + i).empty();
-                                $("#playerName_" + i).append(userNames[i].name);
-                            }
-
                             // Set player's initial hand
                             cardCount = 0;
                             for (var i = 0; i < 4; i++) {
@@ -356,7 +349,8 @@
                     // 喊话 - 动画
                     if (_action.length > 2) {
                         var playerId = _action[0] - '0';
-                        $("#playerShout_" + playerId).css("top", 110 * playerId + 180);
+                        $("#playerShout_" + playerId).css("top", 110 * playerId + 90);
+                        $("#playerShout_" + playerId).css("font-size", 30);
                         $("#playerShout_" + playerId).empty();
                         if (_action[1] == "PENG") {
                             $("#playerShout_" + playerId).append("碰！");
@@ -370,9 +364,9 @@
                         if (_action[1] == "HU") {
                             $("#playerShout_" + playerId).append("胡了！");
                         }
-                        $("#playerShout_" + playerId).animate({top:'-=105px',opacity:'1.0'}, "fast");
-                        $("#playerShout_" + playerId).animate({top:'-=0'}, 700);
-                        $("#playerShout_" + playerId).animate({top:'-=50px',opacity:'0.0'}, "slow");
+                        $("#playerShout_" + playerId).animate({top:'-=0px',opacity:'1.0',fontSize:'30'}, "fast");
+                        $("#playerShout_" + playerId).animate({top:'-=0px'}, 700);
+                        $("#playerShout_" + playerId).animate({top:'-=40px',opacity:'0.0',fontSize:'30'}, "slow");
                     }
                 }
             });
@@ -404,10 +398,11 @@
             // 设置玩家喊话框
             for (var i = 0; i < 4; i++) {
                 $("#leftBoard").append("<div id=\"playerShout_" + i +  "\">111</div>");
+                $("#playerShout_" + i).css("text-align", "center");
                 $("#playerShout_" + i).css("position", "absolute");
                 $("#playerShout_" + i).css("font-family", "微软雅黑");
                 $("#playerShout_" + i).css("font-size", 30);
-                $("#playerShout_" + i).css("top", 110 * i + 50);
+                $("#playerShout_" + i).css("top", 110 * i + 90);
                 $("#playerShout_" + i).css("left", 700);
                 $("#playerShout_" + i).css("width", 100);
                 $("#playerShout_" + i).css("height", 80);
@@ -421,6 +416,15 @@
             $("#changeLogSwitchOff").click(function() {
                 $("#changeLogContent").animate({opacity:0}, "fast");
             })
+
+
+            // Initialize player's name
+            userNames = infoProvider.getPlayerNames();
+            for (var i = 0; i < 4; i++) {
+                $("#playerName_" + i).empty();
+                $("#playerName_" + i).append(userNames[i].name);
+            }
+            
             // 告知网页，播放器初始化已经完成，可以连接服务器了
             infoProvider.notifyInitComplete();
         });
@@ -446,6 +450,7 @@
                     <li>We got a amazing stuff called ChangeLog :)</li>
                     <li>When a player successfully make a action "hu", his hand will become a little tranparent(alpha = 0.5).</li>
                     <li>Players finally get their name.</li>
+                    <li>Position of some elements were slightly changed.</li>
                 </ol>
                 <h4>Bug fix:</h4>
                 <ol>
