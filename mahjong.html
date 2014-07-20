@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <script type="text/javascript" src="/javascripts/jquery-2.1.0.js"></script>
+    <script type="text/javascript" src="player_api.js"></script>
+    <script type="text/javascript">
+        function tranFromCodeToChinese(code) {
+            if (code == "w1" || code == "W1") return "一万";
+            if (code == "w2" || code == "W2") return "二万";
+            if (code == "w3" || code == "W3") return "三万";
+            if (code == "w4" || code == "W4") return "四万";
+            if (code == "w5" || code == "W5") return "五万";
+            if (code == "w6" || code == "W6") return "六万";
+            if (code == "w7" || code == "W7") return "七万";
+            if (code == "w8" || code == "W8") return "八万";
+            if (code == "w9" || code == "W9") return "九万";
+            if (code == "b1" || code == "B1") return "一饼";
+            if (code == "b2" || code == "B2") return "二饼";
+            if (code == "b3" || code == "B3") return "三饼";
+            if (code == "b4" || code == "B4") return "四饼";
+            if (code == "b5" || code == "B5") return "五饼";
+            if (code == "b6" || code == "B6") return "六饼";
+            if (code == "b7" || code == "B7") return "七饼";
+            if (code == "b8" || code == "B8") return "八饼";
+            if (code == "b9" || code == "B9") return "九饼";
+            if (code == "t1" || code == "T1") return "一条";
+            if (code == "t2" || code == "T2") return "二条";
+            if (code == "t3" || code == "T3") return "三条";
+            if (code == "t4" || code == "T4") return "四条";
+            if (code == "t5" || code == "T5") return "五条";
+            if (code == "t6" || code == "T6") return "六条";
+            if (code == "t7" || code == "T7") return "七条";
+            if (code == "t8" || code == "T8") return "八条";
+            if (code == "t9" || code == "T9") return "九条";
+        }
+        $(document).ready(function () {
+            // 玩家手牌堆栈
+            var logCount = 0;
+            var cardCount;
+            var handOfPlayer = new Array();
+            var currentStatus = 0; // 0 for running, 1 for over
+            var currentStatusOfPlayer = new Array(); // 0 for alive, 1 for hule
+
+            for (var i = 0; i < 4; i++) handOfPlayer[i] = new Array();
+
+            // 静态常量
+
+
+            // 方法
+            function reorderHandForPlayer(playerId) {
+                // 对手牌排序
+                for (var i = 0; i < handOfPlayer[playerId].length; i++) handOfPlayer[playerId][i].data("position", i);
+                handOfPlayer[playerId] = handOfPlayer[playerId].sort(
+                    function compare(_a, _b) {
+                        var a = _a.data("cardType");
+                        var b = _b.data("cardType");
+                        if (a.charAt(0) > b.charAt(0) || (a.charAt(0) == b.charAt(0) && a.charAt(1) < b.charAt(1))) return -1;
+                        if (a.charAt(0) < b.charAt(0) || (a.charAt(0) == b.charAt(0) && a.charAt(1) > b.charAt(1))) return 1;
+                        if (_a.data("position") > _b.data("position")) return 1;
+                        if (_a.data("position") < _b.data("position")) return -1;
+                        return 0;
+                    }
+                );
+
+                // 重新计算手牌位置
+                var leftPosition = 5 - 37;
+                for (var i = 0; i < handOfPlayer[playerId].length; i++) {
+                    var card = handOfPlayer[playerId][i];
+                    var cardType = card.data("cardType");
+                    if (i == 0) {
+                        leftPosition += 37;
+                    }
+                    else if (cardType.charAt(0) == 'w' || cardType.charAt(0) == 'b' || cardType.charAt(0) == 't') {
+                        // 固定牌
+                        if (cardType != handOfPlayer[playerId][i - 1].data("cardType")) {
+                            // 如果是第一张
+                            leftPosition += 50;
+                        }
+                        else {
+                            // 如果不是第一张
+                            leftPosition += 37;
+                        }
+                    }
+                    else {
+                        // 如果不是固定牌
+                        var lastCardType = handOfPlayer[playerId][i - 1].data("cardType");
+                        if (lastCardType.charAt(0) == 'w' || lastCardType.charAt(0) == 'b' || lastCardType.charAt(0) == 't') {
+                            // 如果左边是固定牌
+                            leftPosition += 50;
+                        }
+                        else {
+                            // 如果左边不是固定牌
+                            leftPosition += 37;
+                        }
+                    }
+                    if (currentStatusOfPlayer[playerId] == 0) {
+                        card.animate({left:leftPosition + "px", opacity:1.0}, "slow");
+                    }
+                    else {
+                        card.animate({left:leftPosition + "px", opacity:0.5}, "slow");
+                    }
+                }
+            }
+
+            // 设置宽高（宽度貌似没用）
+            infoProvider.setSize(640, 550);
+
+            infoProvider.setNewLogCallback(function (currentLog) {
+                alert("比赛实时播放尚无法使用，请等待比赛结束后回放。");
+                for (var i = 0; i < 4; i++) {
+                    var _display = currentLog;
+                    var _hand = _display.hand[i].split(" ").sort();
+                    $("#playerHand_" + i).empty();
+                    var card_order = 0;
+                    for (var card in _hand) {
+                        $("#playerHand_" + i).append("<div id=\"playerCard_" + i + "_" + card_order + "\">" + _hand[card_order] + "</div>");
+                        $("#playerCard_" + i + "_" + card_order).css("position", "absolute");
+                        $("#playerCard_" + i + "_" + card_order).css("top", 5);
+                        $("#playerCard_" + i + "_" + card_order).css("left", 5 + card_order * 55);
+                        $("#playerCard_" + i + "_" + card_order).css("width", 50);
+                        $("#playerCard_" + i + "_" + card_order).css("height", 70);
+                        $("#playerCard_" + i + "_" + card_order).css("border", "1px solid #000");
+                        card_order ++;
+                    }
+                    //$("#playerName_" + i).append(currentLog.output.display.hand["" + i];
+                }
+            });
+            infoProvider.setReadHistoryCallback(function (historyLogs) {
+
+            });
+            infoProvider.setReadFullLogCallback(function (currentLog) {
+                logCount ++;
+                //console.log(logCount);
+
+                if (currentLog.output) {
+                    // 预处理
+                    if (jQuery.isEmptyObject(currentLog.output.display))
+                        return;
+                    var _display = currentLog.output.display;
+
+                    //if (jQuery.isEmptyObject(_display.action)) return;
+                    var _command = currentLog.output.command;
+                    var _action = _display.action.split(" ");
+                    var _hand = new Array();
+                    for (var i = 0; i < 4; i++) {
+                        _hand[i] = _display.hand[i].split(" ").sort(
+                            function(a, b) {
+                                if (a.charAt(0) > b.charAt(0) || (a.charAt(0) == b.charAt(0) && a.charAt(1) < b.charAt(1))) return -1;
+                                if (a.charAt(0) < b.charAt(0) || (a.charAt(0) == b.charAt(0) && a.charAt(1) > b.charAt(1))) return 1;
+                                return 0;
+                            }
+                        );
+                    }
+
+                    // 手牌动画
+                    if (_action.length < 3) { 
+                        if (logCount == 3) { // 类型 - 初始化
+                            // Set player's status
+                            for (var i = 0; i < 4; i++) currentStatusOfPlayer[i] = 0;
+
+                            // Set player's name
+                            userNames = infoProvider.getPlayerNames();
+                            for (var i = 0; i < 4; i++) {
+                                $("#playerName_" + i).empty();
+                                $("#playerName_" + i).append(userNames[i].name);
+                            }
+
+                            // Set player's initial hand
+                            cardCount = 0;
+                            for (var i = 0; i < 4; i++) {
+                                for (var j = 0; j < _hand[i].length; j++) {
+                                    // 申请一张新的手牌
+                                    cardCount ++;
+                                    $("#playerHand_" + i).append("<div id=\"card_" + cardCount + "\">" +  + "</div>");
+                                    var card = $("#card_" + cardCount);
+                                    handOfPlayer[i].push(card);
+                                    card.css("opacity", 0.0);
+                                    card.css("position", "absolute");
+                                    card.css("top", 10);
+                                    card.css("left", 700);
+                                    card.css("width", 36);
+                                    card.css("height", 52);
+                                    card.data("cardType", _hand[i][j]);
+
+                                    // 为手牌添加图片
+                                    var p, q;
+                                    if (_hand[i][j].charAt(0) == "W" || _hand[i][j].charAt(0) == "w") p = 0;
+                                    if (_hand[i][j].charAt(0) == "T" || _hand[i][j].charAt(0) == "t") p = 1;
+                                    if (_hand[i][j].charAt(0) == "B" || _hand[i][j].charAt(0) == "b") p = 2;
+                                    q = _hand[i][j].charAt(1) - "1";
+                                    card.append("<img src=\"Mahjong.png\" style=\"overflow:hidden; width:324px; height:156px; position:absolute; top:-" + p * 52 + "px; left:-" + q * 36 + "px; clip:rect(" + p * 52 + "px " + (q + 1) * 36 + "px " + (p + 1) * 52 + "px " + q * 36 +  "px)\"> </img>");
+
+                                    // 移动到初始位置的动画
+                                    card.animate({left:5 + j * 37 + "px", opacity:"1.0"}, "slow");
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (_action[1] == "GET") { // 类型 - 摸牌
+                            // 申请一张新的手牌
+                            cardCount ++;
+                            $("#playerHand_" + _action[0]).append("<div id=\"card_" + cardCount + "\">" +  + "</div>");
+                            var card = $("#card_" + cardCount);
+                            handOfPlayer[_action[0]].push(card);
+                            card.css("opacity", 0.0);
+                            card.css("position", "absolute");
+                            card.css("top", 10);
+                            card.css("left", 700);
+                            card.css("width", 36);
+                            card.css("height", 52);
+                            card.data("cardType", _action[2]);
+
+                            // 为手牌添加图片
+                            var p, q;
+                            if (_action[2].charAt(0) == "W" || _action[2].charAt(0) == "w") p = 0;
+                            if (_action[2].charAt(0) == "T" || _action[2].charAt(0) == "t") p = 1;
+                            if (_action[2].charAt(0) == "B" || _action[2].charAt(0) == "b") p = 2;
+                            q = _action[2].charAt(1) - "1";
+                            card.append("<img src=\"Mahjong.png\" style=\"overflow:hidden; width:324px; height:156px; position:absolute; top:-" + p * 52 + "px; left:-" + q * 36 + "px; clip:rect(" + p * 52 + "px " + (q + 1) * 36 + "px " + (p + 1) * 52 + "px " + q * 36 +  "px)\"> </img>");
+
+                            // 移动到初始位置的动画
+                            var leftPosition = handOfPlayer[_action[0]][handOfPlayer[_action[0]].length - 2].css("left");
+                            leftPosition = Number(leftPosition.substring(0, leftPosition.length - 2)) + 50;
+                            card.animate({left:leftPosition + "px", opacity:"1.0"}, "slow");
+                        }
+                        else if (_action[1] == "PLAY") { // 类型 - 弃牌
+                            // 找到要弃的牌
+                            var i = handOfPlayer[_action[0]].length - 1;
+                            while (i > 0 && handOfPlayer[_action[0]][i].data("cardType") != _action[2]) {
+                               // alert(i + ', ' + handOfPlayer[_action[0]][i].data);
+                                i--;
+                            }
+                            if (handOfPlayer[_action[0]][i].data("cardType") != _action[2]) alert("夭寿啦！Judge写错啦！");
+
+                            // 弃牌动画
+                            var abandonedCard = handOfPlayer[_action[0]][i];
+                            handOfPlayer[_action[0]].splice(i, 1);
+                            abandonedCard.animate({opacity:"0.0"}, "slow", function() {abandonedCard.remove()});
+
+                            // 整理动画
+                            reorderHandForPlayer(_action[0]);
+                        }
+                        else if (_action[1] == "PENG") { // 类型 - 碰牌
+                            // 申请一张新的手牌
+                            cardCount ++;
+                            $("#playerHand_" + _action[0]).append("<div id=\"card_" + cardCount + "\">" +  + "</div>");
+                            var card = $("#card_" + cardCount);
+                            handOfPlayer[_action[0]].push(card);
+                            card.css("opacity", 0.0);
+                            card.css("position", "absolute");
+                            card.css("top", 10);
+                            card.css("left", 700);
+                            card.css("width", 36);
+                            card.css("height", 52);
+                            card.data("cardType", _action[2]);
+
+                            // 为手牌添加图片
+                            var p, q;
+                            if (_action[2].charAt(0) == "W" || _action[2].charAt(0) == "w") p = 0;
+                            if (_action[2].charAt(0) == "T" || _action[2].charAt(0) == "t") p = 1;
+                            if (_action[2].charAt(0) == "B" || _action[2].charAt(0) == "b") p = 2;
+                            q = _action[2].charAt(1) - "1";
+                            card.append("<img src=\"Mahjong.png\" style=\"overflow:hidden; width:324px; height:156px; position:absolute; top:-" + p * 52 + "px; left:-" + q * 36 + "px; clip:rect(" + p * 52 + "px " + (q + 1) * 36 + "px " + (p + 1) * 52 + "px " + q * 36 +  "px)\"> </img>");
+
+                            // 
+                            var needToBeLowerCount = 3;
+                            var i = handOfPlayer[_action[0]].length - 1;
+                            while (i >= 0 && needToBeLowerCount > 0) {
+                                if (handOfPlayer[_action[0]][i].data("cardType") == _action[2].toUpperCase()) {
+                                    needToBeLowerCount --;
+                                    handOfPlayer[_action[0]][i].data("cardType", _action[2].toLowerCase());
+                                }
+                                i --;
+                            }
+                            if (needToBeLowerCount > 0) alert("夭寿啦！Judge写错啦！");
+
+                            //
+                            reorderHandForPlayer(_action[0]);
+                        }
+                        else if (_action[1] == "GANG") { // 类型 - 杠牌
+                            if (_action[2] != "SELF") {
+
+                            }
+
+                            // 
+                            var needToBeLowerCount = 4;
+                            var i = handOfPlayer[_action[0]].length - 1;
+                            while (i >= 0 && needToBeLowerCount > 0) {
+                                if (handOfPlayer[_action[0]][i].data("cardType") == _action[2].toUpperCase()) {
+                                    needToBeLowerCount --;
+                                    handOfPlayer[_action[0]][i].data("cardType", _action[2].toLowerCase());
+                                }
+                                i --;
+                            }
+                            //if (needToBeLowerCount > 0) alert("夭寿啦！Judge写错啦！");
+
+                            //
+                            reorderHandForPlayer(_action[0]);
+                        }
+                        else if (_action[1] == "HU") { // 类型 - 胡牌
+                            if (_action[2] != "SELF") { // 如果不是自摸
+                                // 申请一张新的手牌
+                                cardCount ++;
+                                $("#playerHand_" + _action[0]).append("<div id=\"card_" + cardCount + "\">" +  + "</div>");
+                                var card = $("#card_" + cardCount);
+                                handOfPlayer[_action[0]].push(card);
+                                card.css("opacity", 0.0);
+                                card.css("position", "absolute");
+                                card.css("top", 10);
+                                card.css("left", 700);
+                                card.css("width", 36);
+                                card.css("height", 52);
+                                card.data("cardType", _action[2]);
+
+                                // 为手牌添加图片
+                                var p, q;
+                                if (_action[2].charAt(0) == "W" || _action[2].charAt(0) == "w") p = 0;
+                                if (_action[2].charAt(0) == "T" || _action[2].charAt(0) == "t") p = 1;
+                                if (_action[2].charAt(0) == "B" || _action[2].charAt(0) == "b") p = 2;
+                                q = _action[2].charAt(1) - "1";
+                                card.append("<img src=\"Mahjong.png\" style=\"overflow:hidden; width:324px; height:156px; position:absolute; top:-" + p * 52 + "px; left:-" + q * 36 + "px; clip:rect(" + p * 52 + "px " + (q + 1) * 36 + "px " + (p + 1) * 52 + "px " + q * 36 +  "px)\"> </img>");
+
+                                // 
+                                var needToBeLowerCount = 0;
+                                for (var i = 0; i < _hand[_action[0]].length; i++) {
+                                    if (_hand[_action[0]][i] == _action[2].toLowerCase()) {
+                                        needToBeLowerCount ++;
+                                    }
+                                }
+                                for (var i = 0; i < handOfPlayer[_action[0]].length; i++) {
+                                    if (handOfPlayer[_action[0]][i].data("cardType") == _action[2].toLowerCase()) {
+                                        needToBeLowerCount --;
+                                    }
+                                }
+                                var i = handOfPlayer[_action[0]].length - 1;
+                                while (i >= 0 && needToBeLowerCount > 0) {
+                                    if (handOfPlayer[_action[0]][i].data("cardType") == _action[2].toUpperCase()) {
+                                        needToBeLowerCount --;
+                                        handOfPlayer[_action[0]][i].data("cardType", _action[2].toLowerCase());
+                                    }
+                                    i --;
+                                }
+                                if (needToBeLowerCount > 0) alert("夭寿啦！Judge写错啦！");
+
+                                //alert(needToBeLowerCount);
+                            }
+
+                            currentStatusOfPlayer[_action[0] - '0'] = 1;
+
+                            reorderHandForPlayer(_action[0]);
+                        }
+                    }
+                    // 喊话 - 动画
+                    if (_action.length > 2) {
+                        var playerId = _action[0] - '0';
+                        $("#playerShout_" + playerId).css("top", 110 * playerId + 180);
+                        $("#playerShout_" + playerId).empty();
+                        if (_action[1] == "PENG") {
+                            $("#playerShout_" + playerId).append("碰！");
+                        }
+                        if (_action[1] == "GANG") {
+                            $("#playerShout_" + playerId).append("杠！");
+                        }
+                        if (_action[1] == "PLAY") {
+                            $("#playerShout_" + playerId).append(tranFromCodeToChinese(_action[2]) + "！");
+                        }
+                        if (_action[1] == "HU") {
+                            $("#playerShout_" + playerId).append("胡了！");
+                        }
+                        $("#playerShout_" + playerId).animate({top:'-=105px',opacity:'1.0'}, "fast");
+                        $("#playerShout_" + playerId).animate({top:'-=0'}, 700);
+                        $("#playerShout_" + playerId).animate({top:'-=50px',opacity:'0.0'}, "slow");
+                    }
+                }
+            });
+            // 设置玩家姓名框
+            for (var i = 0; i < 4; i++) {
+                $("#leftBoard").append("<p id=\"playerName_" + i +  "\">玩家" + (i + 1) + "</p>");
+                $("#playerName_" + i).css("position", "absolute");
+                $("#playerName_" + i).css("top", 110 * i + 30);
+                $("#playerName_" + i).css("left", 30);
+            }
+            // 设置玩家手牌框
+            for (var i = 0; i < 4; i++) {
+                $("#leftBoard").append("<div id=\"playerHand_" + i +  "\"></div>");
+                var t = $("#playerHand_" + i);
+                $("#playerHand_" + i).css("position", "absolute");
+                $("#playerHand_" + i).css("top", 110 * i + 70);
+                $("#playerHand_" + i).css("left", 30);
+                $("#playerHand_" + i).css("width", 600);
+                $("#playerHand_" + i).css("height", 80);
+                //t.css("border", "1px solid #000");
+            }
+            // 设置玩家手牌堆栈
+            for (var i = 0; i < 4; i++) {
+                for (var j = 0; j < 20; j++) {
+
+                }
+                //$("#playerHand_" + i)
+            }
+            // 设置玩家喊话框
+            for (var i = 0; i < 4; i++) {
+                $("#leftBoard").append("<div id=\"playerShout_" + i +  "\">111</div>");
+                $("#playerShout_" + i).css("position", "absolute");
+                $("#playerShout_" + i).css("font-family", "微软雅黑");
+                $("#playerShout_" + i).css("font-size", 30);
+                $("#playerShout_" + i).css("top", 110 * i + 50);
+                $("#playerShout_" + i).css("left", 700);
+                $("#playerShout_" + i).css("width", 100);
+                $("#playerShout_" + i).css("height", 80);
+                $("#playerShout_" + i).css("opacity", 0);
+            }
+
+
+            $("#changeLogSwitchOn").click(function() {
+                $("#changeLogContent").animate({opacity:1}, "fast");
+            })
+            $("#changeLogSwitchOff").click(function() {
+                $("#changeLogContent").animate({opacity:0}, "fast");
+            })
+            // 告知网页，播放器初始化已经完成，可以连接服务器了
+            infoProvider.notifyInitComplete();
+        });
+    </script>
+    <script type="text/javascript">
+    </script>
+</head>
+<body>
+    <div style="width:1100px; height:450px">
+        <div id="leftBoard" style="border:1px solid #000; float:left; width:800px; height:470px;">
+        </div>
+        <div id="rightBoard" style="border:1px solid #000; float:right; width:290px; height:470px;">
+            <div style="text-align:center; padding:10px; left:50px; top:100px;"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
+        </div>
+        <br>
+        <p>The demo is under develop, please be calm if you see anything special.</p>
+        <div id="changeLogContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0 ">
+            <div style="padding:10px">
+                <div style="float:right"><a id="changeLogSwitchOff" href="javascript:void(0);">Close</a></div>
+                <h3>2014/07/20</h3>
+                <h4>New feature:</h4>
+                <ol>
+                    <li>We got a amazing stuff called ChangeLog :)</li>
+                    <li>When a player successfully make a action "hu", his hand will become a little tranparent(alpha = 0.5).</li>
+                    <li>Players finally get their name.</li>
+                </ol>
+                <h4>Bug fix:</h4>
+                <ol>
+                    <li>The wierd thing happened at the end of demo has been fixed.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

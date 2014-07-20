@@ -1,0 +1,8 @@
+2014/07/20
+
+New stuff:
+1.Now, when a player successfully make a action "hu", his hand will become a little tranparent(alpha = 0.5).
+2.Now, players finally get their name.
+
+Bug fix:
+1.The wierd thing happened at the end of demo has been fixed.
