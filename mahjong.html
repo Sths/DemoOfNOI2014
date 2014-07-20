@@ -468,6 +468,13 @@
                 $("#changeLogContent").animate({opacity:0}, "fast", function() {$("#changeLogContent").css("display", "none");});
             })
 
+            $("#contributeSwitchOn").click(function() {
+                $("#contributeContent").css("display", "inline");
+                $("#contributeContent").animate({opacity:1}, "fast");
+            })
+            $("#contributeSwitchOff").click(function() {
+                $("#contributeContent").animate({opacity:0}, "fast", function() {$("#contributeContent").css("display", "none");});
+            })
 
             // Initialize player's name
             userNames = infoProvider.getPlayerNames();
@@ -488,11 +495,13 @@
         <div id="leftBoard" style="border:1px solid #000; float:left; width:785px; height:470px;">
         </div>
         <div id="rightBoard" style="border:1px solid #000; float:right; width:305px; height:470px;">
-            <div style="text-align:center; padding:10px;"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
+            <div style="text-align:center; padding:10px; float:right"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
+            <div style="text-align:center; padding:10px; float:right"><a id="contributeSwitchOn" href="javascript:void(0);">Contribute</a></div>
             <div style="padding:10px">Card Stack:</div>
         </div>
         <br>
         <p>The demo is under develop, please be calm if you see anything special.</p>
+        
         <div id="changeLogContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0; display:none">
             <div style="padding:10px">
                 <div style="float:right"><a id="changeLogSwitchOff" href="javascript:void(0);">Close</a></div>
@@ -509,6 +518,17 @@
                 <ol>
                     <li>The wierd thing happened at the end of demo has been fixed.</li>
                 </ol>
+            </div>
+        </div>
+
+        <div id="contributeContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0; display:none">
+            <div style="padding:10px">
+                <div style="float:right"><a id="contributeSwitchOff" href="javascript:void(0);">Close</a></div>
+                <h3>Last Update: 2014/07/20</h3>
+                <p>We are tring to do some open source work here, and what we consider first is the demo part.</p>
+                <p>So here is the <a href="https://github.com/Sths/DemoOfNOI2014">link</a> to our github repo, is there something you can do? Like add some voice when player abandon cards ?</p>
+                <p>Those contributer whose code were accpeted will be publish here, and might be rewarded~</p>
+                <p>For more information, you can create a topic in the discuss or connect us by email:stevenhtx1993@163.com</p>
             </div>
         </div>
     </div>
