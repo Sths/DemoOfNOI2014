@@ -39,9 +39,11 @@
             // 玩家手牌堆栈
             var logCount = 0;
             var cardCount;
+            var cardInCardStackCount;
             var handOfPlayer = new Array();
             var currentStatus = 0; // 0 for running, 1 for over
             var currentStatusOfPlayer = new Array(); // 0 for alive, 1 for hule
+            var cardStack = new Array();
 
             for (var i = 0; i < 4; i++) handOfPlayer[i] = new Array();
 
@@ -49,6 +51,36 @@
 
 
             // 方法
+            function abandonCard(cardType) {
+                // Create a new card for card stack
+                cardInCardStackCount ++;
+                $("#rightBoard").append("<div id=\"cardInCardStack_" + cardInCardStackCount + "\"></div>");
+                var card = $("#cardInCardStack_" + cardInCardStackCount);
+                cardStack.push(card);
+                card.css("opacity", 0.0);
+                card.css("float", "left");
+                card.css("margin", "1px");
+                card.css("width", 36);
+                card.css("height", 52);
+                card.css("background-size", "324px");
+                card.css("background-image", "url(Mahjong.png)");
+                card.css('background-repeat', "no-repeat");
+                var p, q;
+                if (cardType.charAt(0) == "W" || cardType.charAt(0) == "w") p = 0;
+                if (cardType.charAt(0) == "T" || cardType.charAt(0) == "t") p = 1;
+                if (cardType.charAt(0) == "B" || cardType.charAt(0) == "b") p = 2;
+                q = cardType.charAt(1) - "1";
+                card.css("background-position", (q * -36) + "px " + (p * -52 + 1) +  "px");
+
+                card.animate({opacity:1.0}, "slow");
+            }
+
+            function reuseCard() {
+                var card = cardStack[cardInCardStackCount - 1];
+
+                card.animate({opacity:0.0}, "slow", function() {card.remove();});
+            }
+
             function reorderHandForPlayer(playerId) {
                 // 对手牌排序
                 for (var i = 0; i < handOfPlayer[playerId].length; i++) handOfPlayer[playerId][i].data("position", i);
@@ -162,6 +194,7 @@
 
                             // Set player's initial hand
                             cardCount = 0;
+                            cardInCardStackCount = 0;
                             for (var i = 0; i < 4; i++) {
                                 for (var j = 0; j < _hand[i].length; j++) {
                                     // 申请一张新的手牌
@@ -228,6 +261,9 @@
                             }
                             if (handOfPlayer[_action[0]][i].data("cardType") != _action[2]) alert("夭寿啦！Judge写错啦！");
 
+                            // 
+                            abandonCard(_action[2]);
+
                             // 弃牌动画
                             var abandonedCard = handOfPlayer[_action[0]][i];
                             handOfPlayer[_action[0]].splice(i, 1);
@@ -249,6 +285,9 @@
                             card.css("width", 36);
                             card.css("height", 52);
                             card.data("cardType", _action[2]);
+
+
+                            reuseCard();
 
                             // 为手牌添加图片
                             var p, q;
@@ -288,6 +327,15 @@
                                 }
                                 i --;
                             }
+
+                            var myOwnCardCount = 0;
+                            for (var i = 0; i < handOfPlayer[_action[0]].length; i ++) {
+                                if (handOfPlayer[_action[0]][i].data("cardType").toUpperCase() == _action[2].toUpperCase()) {
+                                    myOwnCardCount ++;
+                                }
+                            }
+                            if (myOwnCardCount < 4) reuseCard();
+
                             //if (needToBeLowerCount > 0) alert("夭寿啦！Judge写错啦！");
 
                             //
@@ -373,6 +421,8 @@
             // 设置玩家姓名框
             for (var i = 0; i < 4; i++) {
                 $("#leftBoard").append("<p id=\"playerName_" + i +  "\">玩家" + (i + 1) + "</p>");
+                $("#playerName_" + i).css("font-size", 20);
+                $("#playerName_" + i).css("font-family", "微软雅黑");
                 $("#playerName_" + i).css("position", "absolute");
                 $("#playerName_" + i).css("top", 110 * i + 30);
                 $("#playerName_" + i).css("left", 30);
@@ -411,10 +461,11 @@
 
 
             $("#changeLogSwitchOn").click(function() {
+                $("#changeLogContent").css("display", "inline");
                 $("#changeLogContent").animate({opacity:1}, "fast");
             })
             $("#changeLogSwitchOff").click(function() {
-                $("#changeLogContent").animate({opacity:0}, "fast");
+                $("#changeLogContent").animate({opacity:0}, "fast", function() {$("#changeLogContent").css("display", "none");});
             })
 
 
@@ -434,14 +485,15 @@
 </head>
 <body>
     <div style="width:1100px; height:450px">
-        <div id="leftBoard" style="border:1px solid #000; float:left; width:800px; height:470px;">
+        <div id="leftBoard" style="border:1px solid #000; float:left; width:785px; height:470px;">
         </div>
-        <div id="rightBoard" style="border:1px solid #000; float:right; width:290px; height:470px;">
-            <div style="text-align:center; padding:10px; left:50px; top:100px;"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
+        <div id="rightBoard" style="border:1px solid #000; float:right; width:305px; height:470px;">
+            <div style="text-align:center; padding:10px;"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
+            <div style="padding:10px">Card Stack:</div>
         </div>
         <br>
         <p>The demo is under develop, please be calm if you see anything special.</p>
-        <div id="changeLogContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0 ">
+        <div id="changeLogContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0; display:none">
             <div style="padding:10px">
                 <div style="float:right"><a id="changeLogSwitchOff" href="javascript:void(0);">Close</a></div>
                 <h3>2014/07/20</h3>
@@ -451,6 +503,7 @@
                     <li>When a player successfully make a action "hu", his hand will become a little tranparent(alpha = 0.5).</li>
                     <li>Players finally get their name.</li>
                     <li>Position of some elements were slightly changed.</li>
+                    <li>Now we have the "Card Stack" to show which cards has been abandoned.</li>
                 </ol>
                 <h4>Bug fix:</h4>
                 <ol>
