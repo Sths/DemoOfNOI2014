@@ -255,11 +255,11 @@
                         else if (_action[1] == "PLAY") { // 类型 - 弃牌
                             // 找到要弃的牌
                             var i = handOfPlayer[_action[0]].length - 1;
-                            while (i > 0 && handOfPlayer[_action[0]][i].data("cardType") != _action[2]) {
+                            while (i > 0 && handOfPlayer[_action[0]][i].data("cardType").toUpperCase() != _action[2].toUpperCase()) {
                                // alert(i + ', ' + handOfPlayer[_action[0]][i].data);
                                 i--;
                             }
-                            if (handOfPlayer[_action[0]][i].data("cardType") != _action[2]) alert("夭寿啦！Judge写错啦！");
+                            if (handOfPlayer[_action[0]][i].data("cardType").toUpperCase() != _action[2].toUpperCase()) alert("夭寿啦！Judge写错啦！");
 
                             // 
                             abandonCard(_action[2]);
@@ -500,11 +500,16 @@
             <div style="padding:10px">Card Stack:</div>
         </div>
         <br>
-        <p>The demo is under develop, please be calm if you see anything special.</p>
+        <p><strong>The demo is in stable version, please tell us in the discuss if you see anything special.</p>
         
         <div id="changeLogContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0; display:none">
             <div style="padding:10px">
                 <div style="float:right"><a id="changeLogSwitchOff" href="javascript:void(0);">Close</a></div>
+                <h3>2014/07/21</h3>
+                <h4>Bug fix:</h4>
+                <ol>
+                    <li>Now when a player get and abandon the same type card when he "PENG" a card, he will correctly abandon the card he just get, not the card he has "PENG".
+                </ol>
                 <h3>2014/07/20</h3>
                 <h4>New feature:</h4>
                 <ol>
