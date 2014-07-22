@@ -186,6 +186,17 @@
                         );
                     }
 
+                    // 结束
+                    if (_command == "finish") {
+                        console.log(currentLog.output.content);
+                        for (var i = 0; i < 4; i++) {
+                            $("#ratingList").append("<li>" + userNames[i].name + ": " + currentLog.output.content[i] +"</li>");
+                        }
+                        $("#resultContent").css("display", "inline");
+                        $("#resultContent").animate({opacity:1}, "fast");
+                        $("#resultSwitchOn").css("display", "inline");
+                    }
+
                     // 手牌动画
                     if (_action.length < 3) { 
                         if (logCount == 3) { // 类型 - 初始化
@@ -477,6 +488,15 @@
                 $("#contributeContent").animate({opacity:0}, "fast", function() {$("#contributeContent").css("display", "none");});
             })
 
+
+            $("#resultSwitchOn").click(function() {
+                $("#resultContent").css("display", "inline");
+                $("#resultContent").animate({opacity:1}, "fast");
+            })
+            $("#resultSwitchOff").click(function() {
+                $("#resultContent").animate({opacity:0}, "fast", function() {$("#resultContent").css("display", "none");});
+            })
+
             // Initialize player's name
             userNames = infoProvider.getPlayerNames();
             for (var i = 0; i < 4; i++) {
@@ -498,6 +518,7 @@
         <div id="rightBoard" style="border:1px solid #000; float:right; width:305px; height:470px;">
             <div style="text-align:center; padding:10px; float:right"><a id="changeLogSwitchOn" href="javascript:void(0);">ChangeLog</a></div>
             <div style="text-align:center; padding:10px; float:right"><a id="contributeSwitchOn" href="javascript:void(0);">Contribute</a></div>
+            <div style="text-align:center; padding:10px; float:right;"><a id="resultSwitchOn" style="display:none" href="javascript:void(0);">Result</a></div>
             <div style="padding:10px">Card Stack:</div>
         </div>
         <br>
@@ -535,6 +556,16 @@
                 <p>So here is the <a href="https://github.com/Sths/DemoOfNOI2014">link</a> to our github repo, is there something you can do? Like add some voice when player abandon cards ?</p>
                 <p>Those contributer whose code were accpeted will be publish here, and might be rewarded~</p>
                 <p>For more information, you can create a topic in the discuss or connect us by email:stevenhtx1993@163.com</p>
+            </div>
+        </div>
+
+        <div id="resultContent" style="border:1px solid #000; background-color:white; position:absolute; left:150px; top:40px; width: 800px; height: 400px; overflow-y: auto; opacity:0; display:none">
+            <div style="padding:10px">
+                <div style="float:right"><a id="resultSwitchOff" href="javascript:void(0);">Close</a></div>
+                <h2>Game finished!</h2>
+                <h3>Score:</h3>
+                <ul id = "ratingList">
+                </ul>
             </div>
         </div>
     </div>
