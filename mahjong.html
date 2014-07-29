@@ -414,15 +414,18 @@
                         $("#playerShout_" + playerId).empty();
                         if (_action[1] == "PENG") {
                             $("#playerShout_" + playerId).append("碰！");
+                            $("#PENG").play();
                         }
                         if (_action[1] == "GANG") {
                             $("#playerShout_" + playerId).append("杠！");
+                            $("#GANG").play();
                         }
                         if (_action[1] == "PLAY") {
                             $("#playerShout_" + playerId).append(tranFromCodeToChinese(_action[2]) + "！");
                         }
                         if (_action[1] == "HU") {
                             $("#playerShout_" + playerId).append("胡了！");
+                            $("#HU").play();
                         }
                         $("#playerShout_" + playerId).animate({top:'-=0px',opacity:'1.0',fontSize:'30'}, "fast");
                         $("#playerShout_" + playerId).animate({top:'-=0px'}, 700);
@@ -513,6 +516,9 @@
 </head>
 <body>
     <embed id="soundControl" src="1.mp3" mastersound hidden="true" loop="true" autostart="true"></embed>
+    <embed id="PENG" src="sound/boy/碰.wav" mastersound hidden="true" loop="false" autostart="false"></embed>
+    <embed id="GANG" src="sound/boy/杠.wav" mastersound hidden="true" loop="false" autostart="false"></embed>
+    <embed id="HU" src="sound/boy/胡.wav" mastersound hidden="true" loop="false" autostart="false"></embed>
     <div style="width:1100px; height:450px">
         <div id="leftBoard" style="border:1px solid #000; float:left; width:785px; height:470px;">
         </div>
